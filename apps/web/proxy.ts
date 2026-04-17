@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 
 export function proxy(request: NextRequest) {
   const newUrl = new URL(request.url)
-  newUrl.host = "localhost:4000"
+  newUrl.host = process.env.BACKEND_URL || "localhost:4000"
   return NextResponse.rewrite(newUrl)
 }
 
