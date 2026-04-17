@@ -1,31 +1,38 @@
+import { CHASECK } from "@/config"
 import {
   json,
-  parseBody,
   parseQuery,
+  Status,
   status,
-  type CTXBody,
   type CTXQuery,
   type RouterHandlers,
-} from "@bepalo/router";
+} from "@bepalo/router"
 
 // ROUTE /api/v1/payment/:payment_id
 export default {
   CRUD: {
-    FILTER: [
-      parseBody({
-        accept: ["application/json", "application/x-www-form-urlencoded"],
-        maxSize: 4 * 1024,
-        once: true,
-      }),
-      parseQuery(),
-    ],
-    HANDLER: (req, { query, body }) => {
-      return json({ query, body });
+    FILTER: [parseQuery()],
+    HANDLER: async (req, { params }) => {
+      const { payment_id } = params
+      const res = await fetch(
+        `https://api.chapa.co/v1/transaction/verify/${payment_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${CHASECK}`,
+          },
+        }
+      )
+      const resp = res.ok ? await res.json() : undefined
+      if (resp?.status !== "success") {
+        return status(Status._400_BadRequest, "Payment failed or cancelled")
+      }
+      const transaction = resp.data
+      return json({ transaction })
     },
   },
 } satisfies RouterHandlers<
   {},
   {
-    CRUD: CTXBody & CTXQuery;
+    CRUD: CTXQuery
   }
->;
+>
